@@ -45,19 +45,19 @@ ENV HOME=/home/$NB_USER
 ADD fix-permissions /usr/local/bin/fix-permissions
 # Create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
-RUN groupadd wheel -g 11 && \
-    echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
-    useradd -m -s /bin/bash -N -u $NB_UID $NB_USER && \
-    chmod g+w /etc/passwd && \
-    fix-permissions $HOME
+RUN groupadd wheel -g 11
+RUN echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su
+RUN useradd -m -s /bin/bash -N -u $NB_UID $NB_USER
+RUN chmod g+w /etc/passwd
+RUN fix-permissions $HOME
 
 
 
 USER $NB_UID
 
 # Setup work directory for backward-compatibility
-RUN mkdir /home/$NB_USER/work && \
-fix-permissions /home/$NB_USER
+RUN mkdir /home/$NB_USER/work
+RUN fix-permissions /home/$NB_USER
 
 
 
