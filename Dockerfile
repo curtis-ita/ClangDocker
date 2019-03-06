@@ -11,18 +11,65 @@ ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
 
-# Set when building on Travis so that certain long-running build steps can
-# be skipped to shorten build time.
-ARG TEST_ONLY_BUILD
+
+
+USER root
+
+# Install all OS dependencies for notebook server that starts but lacks all
+# features (e.g., download as all possible file formats)
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get -yq dist-upgrade \
+ && apt-get install -yq --no-install-recommends \
+    wget \
+    bzip2 \
+    ca-certificates \
+    sudo \
+    locales \
+    fonts-liberation \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install compilers
+RUN apt-get update && \
+	apt-get install -y clang clang-format gcc make nano
+
+# local
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+locale-gen
+	
+# Configure environment
+ENV SHELL=/bin/bash \
+    NB_USER=$NB_USER \
+    NB_UID=$NB_UID \
+    NB_GID=$NB_GID \
+    LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US.UTF-8
+ENV HOME=/home/$NB_USER
+
+ADD fix-permissions /usr/local/bin/fix-permissions
+# Create jovyan user with UID=1000 and in the 'users' group
+# and make sure these dirs are writable by the `users` group.
+RUN groupadd wheel -g 11 && \
+    echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
+    useradd -m -s /bin/bash -N -u $NB_UID $NB_USER && \
+    chmod g+w /etc/passwd && \
+    fix-permissions $HOME
+
+
+
+USER $NB_UID
+
+# Setup work directory for backward-compatibility
+RUN mkdir /home/$NB_USER/work && \
+fix-permissions /home/$NB_USER
 
 
 
 USER root
 
-# Chrome and Firefox browsers
-RUN apt-get update && \
-	apt-get install -y clang clang-format gcc make nano
+WORKDIR $HOME
 
 
 
+# Switch back to jovyan to avoid accidental container runs as root
 USER $NB_UID
