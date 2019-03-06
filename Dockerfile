@@ -28,10 +28,6 @@ RUN apt-get update && apt-get -yq dist-upgrade \
     fonts-liberation \
  && rm -rf /var/lib/apt/lists/*
 
-# Install compilers
-RUN apt-get update && \
-	apt-get install -y clang clang-format gcc make nano
-
 # local
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
 locale-gen
@@ -68,6 +64,10 @@ fix-permissions /home/$NB_USER
 USER root
 
 WORKDIR $HOME
+
+# Install compilers
+RUN apt-get update && \
+	apt-get install -y clang clang-format gcc make nano
 
 
 
